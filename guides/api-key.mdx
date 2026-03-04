@@ -1,0 +1,176 @@
+---
+title: API Key Setup
+description: Learn how to obtain and configure your Gemini API key for flashcard generation
+---
+
+## Getting Your Gemini API Key
+
+The PDF Flashcards application uses Google's Gemini AI (specifically the `gemini-2.5-flash-lite` model) to generate flashcards from your PDFs.
+
+<Steps>
+  <Step title="Visit Google AI Studio">
+    Navigate to the Google AI Studio API Keys page:
+
+    ```
+    https://aistudio.google.com/api-keys
+    ```
+
+    <Note>
+      You'll need a Google account to access AI Studio. Sign in if prompted.
+    </Note>
+  </Step>
+
+  <Step title="Create a new API key">
+    Click on "Create API Key" to generate a new key for your project.
+
+    Your API key will look something like:
+    ```
+    AIzaSyD1234567890abcdefghijklmnopqrstuv
+    ```
+  </Step>
+
+  <Step title="Copy and save your key">
+    Copy the generated API key and store it securely. You'll need it to configure the application.
+
+    <Warning>
+      Keep your API key private. Never commit it to version control or share it publicly.
+    </Warning>
+  </Step>
+</Steps>
+
+## Configuring Your API Key
+
+There are two ways to provide your API key to the application:
+
+### Method 1: Environment Variable (Recommended for Server)
+
+Set your API key in the `.env` file:
+
+```bash
+API_KEY=your_gemini_api_key_here
+```
+
+The application loads this at startup:
+
+```python main.py
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+API_KEY = os.getenv("API_KEY")
+```
+
+<Info>
+  Using an environment variable is ideal if you're the only user or running the application on a server where the API key can be securely stored.
+</Info>
+
+### Method 2: Web Interface (Recommended for End Users)
+
+Provide your API key directly in the web interface:
+
+1. Open the application in your browser
+2. Enter your Gemini API key in the "Gemini API Key" field
+3. Upload your PDF and generate flashcards
+
+The application accepts the API key as a form parameter:
+
+```python main.py
+@app.post("/upload")
+async def upload(file: UploadFile = File(...), api_key: str = Form(None)):
+    # Use provided API key or fall back to environment variable
+    key = api_key or API_KEY
+    if not key:
+        return {"error": "API key is required"}
+```
+
+<Info>
+  When you enter your API key in the web interface, it's automatically saved to your browser's localStorage for convenience in future sessions (see static/index.html:156-167).
+</Info>
+
+## API Key Storage in Browser
+
+The web interface stores your API key locally in your browser for convenience:
+
+```javascript static/index.html
+// Load API key from localStorage on page load
+document.addEventListener("DOMContentLoaded", () => {
+    const savedKey = localStorage.getItem("gemini_api_key");
+    if (savedKey) {
+        document.getElementById("apiKey").value = savedKey;
+    }
+});
+
+// Save API key to localStorage when changed
+document
+    .getElementById("apiKey")
+    ?.addEventListener("input", (e) => {
+        localStorage.setItem("gemini_api_key", e.target.value);
+    });
+```
+
+<Note>
+  Your API key is stored **only in your browser's localStorage**, not on any server. It remains on your device and is sent to the server only when you upload a PDF.
+</Note>
+
+## Security Best Practices
+
+<Warning>
+  **Never share your API key or commit it to version control.** Anyone with access to your API key can use it to make requests to Google's services.
+</Warning>
+
+### Protecting Your API Key
+
+1. **Add .env to .gitignore**
+   ```bash .gitignore
+   .env
+   ```
+
+2. **Use environment-specific configurations**
+   - Development: Use `.env` file locally
+   - Production: Use secure environment variable management (e.g., AWS Secrets Manager, Azure Key Vault)
+
+3. **Monitor API usage**
+   - Check your Google AI Studio dashboard regularly
+   - Set up usage alerts to detect unauthorized access
+
+4. **Rotate keys periodically**
+   - Generate new API keys every few months
+   - Revoke old keys after migration
+
+### Browser localStorage Security
+
+While localStorage is convenient, be aware:
+
+- Keys are stored in plain text in your browser
+- They can be accessed by JavaScript running on the same domain
+- Clear your localStorage if using a shared computer:
+  ```javascript
+  localStorage.removeItem("gemini_api_key");
+  ```
+
+<Info>
+  For production deployments serving multiple users, consider implementing proper authentication and storing API keys server-side with encryption.
+</Info>
+
+## Troubleshooting
+
+<Accordion title="'API key is required' error">
+  This error occurs when no API key is provided. Make sure:
+  - You've entered an API key in the web interface, OR
+  - You've set the `API_KEY` in your `.env` file
+  - The `.env` file is in the same directory as `main.py`
+</Accordion>
+
+<Accordion title="Invalid API key error">
+  If you receive an invalid API key error:
+  - Verify the key is copied correctly (no extra spaces)
+  - Ensure the key is active in Google AI Studio
+  - Check that you're using a Gemini API key (not other Google API keys)
+</Accordion>
+
+<Accordion title="API key not persisting in browser">
+  If your API key isn't being saved:
+  - Ensure JavaScript is enabled in your browser
+  - Check that localStorage is not disabled
+  - Try clearing your browser cache and re-entering the key
+</Accordion>

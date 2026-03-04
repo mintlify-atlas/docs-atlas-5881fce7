@@ -1,0 +1,248 @@
+---
+title: Usage Guide
+description: Learn how to use the PDF Flashcards application to generate flashcards from your PDF documents
+---
+
+## Overview
+
+The PDF Flashcards application extracts text from your PDF documents and uses Google's Gemini AI to automatically generate question-and-answer flashcards for studying.
+
+## Uploading a PDF
+
+<Steps>
+  <Step title="Access the web interface">
+    Navigate to the application in your browser (default: `http://127.0.0.1:8000`).
+
+    You'll see the "PDF to Flashcards" interface with an API key field and file upload option.
+  </Step>
+
+  <Step title="Enter your API key">
+    If you haven't already, enter your Gemini API key in the "Gemini API Key" field.
+
+    <Info>
+      Your API key will be automatically saved to your browser's localStorage for future use. See the [API Key guide](/guides/api-key) for more details.
+    </Info>
+  </Step>
+
+  <Step title="Select your PDF file">
+    Click on the file input and select a PDF file from your device.
+
+    ```html static/index.html
+    <input type="file" id="pdf" accept=".pdf" />
+    ```
+
+    <Note>
+      Only PDF files are accepted. The file must contain extractable text (not just images).
+    </Note>
+  </Step>
+
+  <Step title="Generate flashcards">
+    Click the "Generate Flashcards" button to start the process.
+
+    The status message will update to show "Generating flashcards..." while processing.
+  </Step>
+
+  <Step title="Review your flashcards">
+    Once complete, your flashcards will appear below the upload form, showing:
+    - Total number of flashcards generated
+    - Each flashcard with its question and answer
+  </Step>
+</Steps>
+
+## What Happens During Processing
+
+Here's what happens behind the scenes when you upload a PDF:
+
+### 1. File Upload and Validation
+
+The PDF is uploaded to the server and validated:
+
+```python main.py
+@app.post("/upload")
+async def upload(file: UploadFile = File(...), api_key: str = Form(None)):
+    # Use provided API key or fall back to environment variable
+    key = api_key or API_KEY
+    if not key:
+        return {"error": "API key is required"}
+```
+
+### 2. PDF Text Extraction
+
+The application extracts text from all pages using PyPDF2:
+
+```python main.py
+# Extract text from PDF
+text = ""
+with open(tmp_path, "rb") as f:
+    reader = PyPDF2.PdfReader(f)
+    for page in reader.pages:
+        text += page.extract_text() or ""
+
+if not text.strip():
+    return {"error": "No text found in PDF"}
+```
+
+<Warning>
+  If your PDF contains only images or scanned documents without OCR, the extraction will fail. The PDF must contain actual text content.
+</Warning>
+
+### 3. AI Flashcard Generation
+
+The extracted text (up to 15,000 characters) is sent to Google's Gemini AI:
+
+```python main.py
+# Generate flashcards using Gemini
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite", api_key=key)
+
+prompt = f"""Create 20 simple flashcards from this text.
+Format each as: Q: question | A: answer
+One flashcard per line. Keep it simple.
+
+Text:
+{text[:15000]}"""
+
+response = llm.invoke(prompt)
+```
+
+<Info>
+  The application uses the **gemini-2.5-flash-lite** model for fast and cost-effective flashcard generation.
+</Info>
+
+### 4. Parsing and Display
+
+The AI response is parsed to extract individual flashcards:
+
+```python main.py
+# Parsing flashcards
+cards = []
+for line in response.content.split("\n"):
+    if "Q:" in line and "A:" in line:
+        cards.append(line.strip())
+
+return {"cards": cards}
+```
+
+## Flashcard Format
+
+Each flashcard follows a simple format:
+
+```
+Q: [Question] | A: [Answer]
+```
+
+### Example Output
+
+For a PDF about Python programming, you might get flashcards like:
+
+```
+Q: What is a list in Python? | A: A mutable, ordered collection of items
+Q: How do you define a function in Python? | A: Using the def keyword
+Q: What does the len() function do? | A: Returns the number of items in an object
+```
+
+The web interface displays each flashcard in a styled card:
+
+```javascript static/index.html
+data.cards.forEach((card, i) => {
+    cards.innerHTML += `<div class="card"><strong>#${i + 1}</strong> ${card}</div>`;
+});
+```
+
+<Note>
+  The AI aims to generate **20 flashcards** per PDF, but the actual number may vary depending on the content and complexity of your document.
+</Note>
+
+## Tips for Best Results
+
+<Steps>
+  <Step title="Use well-structured PDFs">
+    PDFs with clear headings, paragraphs, and organized content produce better flashcards.
+  </Step>
+
+  <Step title="Ensure text is extractable">
+    Avoid scanned PDFs unless they have been OCR-processed. The application cannot extract text from images.
+  </Step>
+
+  <Step title="Keep content focused">
+    PDFs with focused, educational content (textbooks, lecture notes, study guides) work best.
+
+    <Info>
+      The application processes only the first **15,000 characters** of your PDF to stay within AI token limits (main.py:54).
+    </Info>
+  </Step>
+
+  <Step title="Review and customize">
+    While the AI-generated flashcards are generally accurate, always review them for correctness and relevance to your study needs.
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+<Accordion title="'No text found in PDF' error">
+  This error occurs when the PDF doesn't contain extractable text. Possible causes:
+  - The PDF consists only of images or scanned pages
+  - The PDF is corrupted or not a valid PDF file
+  - The PDF is password-protected
+
+  **Solution:** Use a PDF with actual text content or run OCR on scanned documents first.
+</Accordion>
+
+<Accordion title="No flashcards generated">
+  If the response shows "No flashcards generated":
+  - The AI couldn't identify suitable question-answer pairs from the content
+  - The PDF content may be too short or not educational in nature
+  - Try with a different PDF that has more structured information
+</Accordion>
+
+<Accordion title="Fewer than 20 flashcards">
+  The application requests 20 flashcards, but may generate fewer if:
+  - The PDF content is limited
+  - The text doesn't contain enough distinct concepts
+  - The first 15,000 characters don't cover sufficient material
+
+  **Solution:** This is normal. Use what's generated or try a longer, more detailed PDF.
+</Accordion>
+
+<Accordion title="Processing is slow">
+  Flashcard generation typically takes 10-30 seconds depending on:
+  - PDF size and page count
+  - AI API response time
+  - Network connection speed
+
+  **Solution:** Be patient. The status message will update when processing is complete.
+</Accordion>
+
+<Accordion title="Upload fails or errors out">
+  If uploads are failing:
+  - Check that your API key is valid and active
+  - Ensure you have a stable internet connection
+  - Verify the server is running (`uvicorn main:app`)
+  - Check browser console for JavaScript errors
+</Accordion>
+
+## Understanding the Status Messages
+
+The application provides real-time feedback:
+
+```javascript static/index.html
+status.textContent = "Generating flashcards...";
+// ... after processing ...
+if (data.error) {
+    status.textContent = "Error: " + data.error;
+} else if (data.cards.length === 0) {
+    status.textContent = "No flashcards generated";
+} else {
+    status.textContent = `Generated ${data.cards.length} flashcards`;
+}
+```
+
+- **"Please enter your Gemini API key"** - No API key provided
+- **"Please select a PDF file"** - No file selected
+- **"Generating flashcards..."** - Processing in progress
+- **"Generated X flashcards"** - Success! X flashcards created
+- **"Error: ..."** - Something went wrong (details provided)
+- **"No flashcards generated"** - Processing completed but no valid flashcards found
+
+<Info>
+  All status messages are displayed in the status div below the upload button (static/index.html:97).
+</Info>

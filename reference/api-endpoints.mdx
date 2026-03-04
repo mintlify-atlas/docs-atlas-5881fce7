@@ -1,0 +1,124 @@
+---
+title: API Endpoints
+description: Complete reference for the FlashCard application API endpoints
+---
+
+The FlashCard application provides a REST API for uploading PDF files and generating flashcards using AI.
+
+## GET /
+
+Serves the main HTML interface for the application.
+
+### Response
+
+Returns the HTML file located at `static/index.html`, which provides a user-friendly interface for uploading PDFs and viewing generated flashcards.
+
+### Example
+
+```bash
+curl http://localhost:8000/
+```
+
+---
+
+## POST /upload
+
+Uploads a PDF file and generates flashcards from its content using Google's Gemini AI.
+
+### Request Format
+
+The endpoint accepts `multipart/form-data` requests with the following parameters:
+
+<ParamField path="file" type="UploadFile" required>
+  PDF file to process. Must be a valid PDF document with extractable text content.
+</ParamField>
+
+<ParamField path="api_key" type="string" default="null">
+  Gemini API key for authentication. If not provided, the server will use the `API_KEY` environment variable.
+</ParamField>
+
+### Request Example
+
+Using JavaScript (from the source code in `static/index.html:203-211`):
+
+```javascript
+const form = new FormData();
+form.append("file", file);
+form.append("api_key", apiKey);
+
+const res = await fetch("/upload", {
+    method: "POST",
+    body: form,
+});
+const data = await res.json();
+```
+
+Using cURL:
+
+```bash
+curl -X POST http://localhost:8000/upload \
+  -F "file=@document.pdf" \
+  -F "api_key=your_gemini_api_key_here"
+```
+
+### Response Format
+
+#### Success Response
+
+<ResponseField name="cards" type="array">
+  Array of flashcard strings. Each flashcard is formatted as `"Q: question | A: answer"`.
+  
+  The application generates up to 20 flashcards from the first 15,000 characters of the PDF text.
+</ResponseField>
+
+**Example:**
+
+```json
+{
+  "cards": [
+    "Q: What is Python? | A: A high-level programming language",
+    "Q: What does API stand for? | A: Application Programming Interface",
+    "Q: What is FastAPI? | A: A modern web framework for building APIs with Python"
+  ]
+}
+```
+
+#### Error Responses
+
+<ResponseField name="error" type="string">
+  Error message describing what went wrong during processing.
+</ResponseField>
+
+**Missing API Key:**
+
+```json
+{
+  "error": "API key is required"
+}
+```
+
+This error occurs when no `api_key` is provided in the request and no `API_KEY` environment variable is configured (see `main.py:28-29`).
+
+**Empty PDF:**
+
+```json
+{
+  "error": "No text found in PDF"
+}
+```
+
+This error occurs when the PDF file contains no extractable text content (see `main.py:43-44`).
+
+### Processing Details
+
+<Note>
+The endpoint processes PDFs by:
+1. Extracting text from all pages using PyPDF2
+2. Sending the first 15,000 characters to Gemini AI
+3. Requesting 20 simple flashcards in the format `Q: question | A: answer`
+4. Parsing the AI response and returning only lines containing both "Q:" and "A:"
+</Note>
+
+<Warning>
+The API key is sent with each request. Ensure you're using HTTPS in production to protect sensitive credentials.
+</Warning>

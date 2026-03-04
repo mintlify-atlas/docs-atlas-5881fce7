@@ -1,0 +1,137 @@
+---
+title: Installation
+description: Learn how to install and set up the PDF Flashcards application
+---
+
+## Prerequisites
+
+Before you begin, ensure you have Python installed on your system. This application requires Python 3.7 or higher.
+
+## Installation Steps
+
+<Steps>
+  <Step title="Create a virtual environment">
+    It's recommended to use a virtual environment to isolate the application's dependencies.
+
+    ```bash
+    python -m venv .flashcard
+    ```
+
+    <Note>
+      The source code uses `.flashcard` as the virtual environment directory name. You can choose a different name if preferred.
+    </Note>
+  </Step>
+
+  <Step title="Activate the virtual environment">
+    Activate your virtual environment based on your operating system:
+
+    **Windows:**
+    ```bash
+    .flashcard\Scripts\activate
+    ```
+
+    **Linux/Mac:**
+    ```bash
+    source .flashcard/bin/activate
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    Install all required packages from the `requirements.txt` file:
+
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+    This will install the following dependencies:
+    - `fastapi` - Web framework for building the API
+    - `uvicorn[standard]` - ASGI server for running FastAPI
+    - `python-multipart` - For handling file uploads
+    - `PyPDF2` - PDF text extraction
+    - `langchain-google-genai` - Google Gemini AI integration
+    - `langchain-core` - Core LangChain functionality
+    - `google-genai` - Google Generative AI SDK
+    - `faiss-cpu` - Vector similarity search
+    - `python-dotenv` - Environment variable management
+  </Step>
+
+  <Step title="Configure environment variables">
+    Create a `.env` file in the root directory of your project:
+
+    ```bash
+    touch .env
+    ```
+
+    Add your Gemini API key to the `.env` file:
+
+    ```bash
+    API_KEY=your_gemini_api_key_here
+    ```
+
+    <Info>
+      The API key in the `.env` file is optional. You can also provide it through the web interface when uploading PDFs. See the [API Key guide](/guides/api-key) for more details.
+    </Info>
+  </Step>
+
+  <Step title="Run the server">
+    Start the FastAPI application using Uvicorn:
+
+    ```bash
+    uvicorn main:app
+    ```
+
+    By default, the server will start on `http://127.0.0.1:8000`.
+
+    <Note>
+      To enable hot reload during development, add the `--reload` flag:
+      ```bash
+      uvicorn main:app --reload
+      ```
+    </Note>
+  </Step>
+
+  <Step title="Access the application">
+    Open your browser and navigate to:
+
+    ```
+    http://127.0.0.1:8000
+    ```
+
+    You should see the PDF Flashcards web interface.
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+<Accordion title="ImportError: No module named 'fastapi'">
+  This means the dependencies were not installed correctly. Make sure:
+  - Your virtual environment is activated
+  - You ran `pip install -r requirements.txt` in the correct directory
+  - The `requirements.txt` file exists in your project directory
+</Accordion>
+
+<Accordion title="Port already in use error">
+  If port 8000 is already in use, you can specify a different port:
+  ```bash
+  uvicorn main:app --port 8080
+  ```
+</Accordion>
+
+<Accordion title="API key errors">
+  If you're getting API key related errors:
+  - Verify your API key is correct in the `.env` file
+  - Ensure the `.env` file is in the same directory as `main.py`
+  - Check that `python-dotenv` is installed
+  - Alternatively, provide the API key through the web interface (see main.py:25-29)
+</Accordion>
+
+<Accordion title="PDF extraction fails">
+  If PDF text extraction is not working:
+  - Ensure the PDF contains actual text (not just images)
+  - Try with a different PDF to rule out file corruption
+  - Check that PyPDF2 is properly installed: `pip install --upgrade PyPDF2`
+</Accordion>
+
+<Warning>
+  Always activate your virtual environment before running the application. If you see "command not found" errors, your virtual environment is likely not activated.
+</Warning>

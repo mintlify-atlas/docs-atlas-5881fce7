@@ -1,0 +1,80 @@
+---
+title: Environment Variables
+description: Configuration reference for environment variables used by the FlashCard application
+---
+
+The FlashCard application uses environment variables for configuration, loaded via the `python-dotenv` package.
+
+## API_KEY
+
+The Gemini API key used for generating flashcards.
+
+<ParamField path="API_KEY" type="string" default="null">
+  Google Gemini API key for AI-powered flashcard generation.
+  
+  **Source:** Loaded from `.env` file via `python-dotenv` (see `main.py:12-13`).
+</ParamField>
+
+### How It's Loaded
+
+The application loads environment variables using `python-dotenv` at startup:
+
+```python
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+API_KEY = os.getenv("API_KEY")
+```
+
+This code (from `main.py:5,11-13`) reads the `.env` file in the application root and makes variables available via `os.getenv()`.
+
+### Fallback Behavior
+
+The application provides flexible API key handling with a fallback mechanism:
+
+```python
+# Use provided API key or fall back to environment variable
+key = api_key or API_KEY
+if not key:
+    return {"error": "API key is required"}
+```
+
+(From `main.py:26-29`)
+
+<Note>
+**Priority order:**
+1. API key provided in the upload request (`api_key` form parameter)
+2. API key from environment variable (`API_KEY`)
+3. Error if neither is available
+</Note>
+
+This design allows users to:
+- Set a server-wide default API key via environment variable
+- Override it per-request if needed
+- Use the application without an environment variable by providing the key in each request
+
+### Example .env File
+
+Create a `.env` file in the application root directory:
+
+```bash
+API_KEY=AIzaSyAbc123ExampleKeyXYZ456
+```
+
+<Warning>
+Never commit your `.env` file to version control. Add it to `.gitignore` to prevent accidentally exposing your API keys.
+</Warning>
+
+### Getting a Gemini API Key
+
+To obtain a Google Gemini API key:
+
+1. Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Sign in with your Google account
+3. Create a new API key
+4. Copy the key and add it to your `.env` file
+
+<Note>
+The application specifically uses the `gemini-2.5-flash-lite` model (see `main.py:47`).
+</Note>

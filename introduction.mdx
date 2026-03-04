@@ -1,0 +1,58 @@
+---
+title: Introduction
+description: AI-powered flashcard generator that transforms PDF documents into study materials
+---
+
+## What is FlashCard?
+
+FlashCard is a web-based application that automatically generates study flashcards from PDF documents using Google's Gemini AI. You upload a PDF, and the application extracts the text and creates question-answer flashcards to help you study more effectively.
+
+## Key Features
+
+### PDF Upload and Processing
+
+Upload any PDF document through a simple web interface. The application uses PyPDF2 to extract text content from your documents automatically.
+
+### AI-Powered Flashcard Generation
+
+Leverage Google's Gemini 2.5 Flash Lite model to analyze your document content and generate relevant, contextual flashcards. The AI creates up to 20 flashcards per document, focusing on key concepts and information.
+
+### Flexible API Key Management
+
+You can provide your Gemini API key in two ways:
+- Through the web interface (stored locally in your browser)
+- Via environment variables for server-side configuration
+
+### Real-time Processing
+
+Get instant flashcard generation with a responsive interface that displays your flashcards as soon as they're created.
+
+## Technology Stack
+
+FlashCard is built with modern Python technologies:
+
+- **FastAPI**: High-performance web framework for building the API
+- **PyPDF2**: PDF text extraction library
+- **LangChain**: Framework for working with language models
+- **Google Gemini**: State-of-the-art AI model for content generation
+- **Python-dotenv**: Environment variable management
+
+## Use Cases
+
+FlashCard is perfect for:
+
+- **Students**: Convert lecture notes, textbooks, and study materials into flashcards
+- **Educators**: Create study aids for students from course materials
+- **Professionals**: Generate review materials from technical documentation
+- **Researchers**: Extract key points from academic papers for quick review
+- **Self-learners**: Transform any learning material into an interactive study format
+
+## How It Works
+
+The application follows a simple three-step process:
+
+1. **Upload**: Select a PDF document from your device
+2. **Extract**: The application reads and extracts text from the PDF
+3. **Generate**: Gemini AI analyzes the content and creates flashcards in Q&A format
+
+Each flashcard follows a consistent format: `Q: question | A: answer`, making them easy to use for studying and review.
