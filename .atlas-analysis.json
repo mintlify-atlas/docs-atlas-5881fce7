@@ -1,0 +1,46 @@
+{
+  "projectType": "general",
+  "projectName": "Minimal FlashCard",
+  "projectDescription": "A simple web application that converts PDF documents into AI-generated flashcards using Google's Gemini API.",
+  "theme": "almond",
+  "primaryColor": "#4caf50",
+  "lightColor": "#81c784",
+  "darkColor": "#388e3c",
+  "navigation": {
+    "groups": [
+      {
+        "group": "Get Started",
+        "pages": [
+          "introduction",
+          "quickstart"
+        ]
+      },
+      {
+        "group": "Guides",
+        "pages": [
+          "guides/installation",
+          "guides/api-key",
+          "guides/usage"
+        ]
+      },
+      {
+        "group": "Reference",
+        "pages": [
+          "reference/api-endpoints",
+          "reference/environment"
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Upload PDF documents via web interface",
+    "AI-powered flashcard generation using Gemini 2.5 Flash Lite",
+    "Automatic text extraction from PDFs",
+    "Simple question-answer format",
+    "Local API key storage in browser"
+  ],
+  "publicApiSurface": [
+    "GET / - Serve the main HTML interface",
+    "POST /upload - Upload PDF and generate flashcards"
+  ]
+}
